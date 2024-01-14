@@ -1,0 +1,101 @@
+import { useState } from 'react'
+import './App.css'
+
+function App() {
+  const [values, setValues] = useState<string[]>([])
+  const [regex, setRegex] = useState<string>('')
+  const dragging = "dragging"
+  function handleChange(event: React.ChangeEvent<HTMLInputElement>, index: number) {
+    const { value } = event.target
+    console.log(index, value)
+    setValues((prevValues) => {
+      const newValues = [...prevValues]
+      newValues[index] = value
+      return newValues
+    })
+  }
+
+  function addField() {
+    setValues(prevValues => [...prevValues, ''])
+  }
+
+  function generateRegex() {
+    setRegex(() => {
+      let regex = ''
+      values.map(value => regex+= value)
+      return regex
+    })
+  }
+
+  function handleDragStart(event: React.DragEvent<HTMLInputElement>, index: number) {
+    console.log(event, index)
+    const currentElement = document.getElementById(index.toString())
+    currentElement?.classList.add(dragging)
+    console.log(currentElement)
+  }
+
+  function handleDragOver(event: React.DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    const afterElement = getDragAfterElement(event.clientY)
+    console.log(after)
+    const container = document.getElementById("container")
+    const draggingElement = document.getElementsByClassName(dragging)[0]
+    container?.appendChild(draggingElement!)
+  }
+  function handleDragEnd(event: React.DragEvent<HTMLInputElement>, index: number) {
+    const currentElement = document.getElementById(index.toString())
+    currentElement?.classList.remove(dragging)
+  }
+
+  function getDragAfterElement(y: number) {
+    const draggableElements = [...document.querySelectorAll(".draggable:not(.dragging)")]
+    
+    return draggableElements.reduce((closest, child) => {
+      const box = child.getBoundingClientRect()
+      const offset = y - box.top - (box.height / 2)
+      if(offset < 0 && offset > closest.offset) {
+        return {offset: offset, element: child}
+      } else {
+        return closest
+      } 
+      console.log(box, offset)
+    }, {offset: Number.POSITIVE_INFINITY}).element
+  }
+  return (
+    <>
+      <form>
+        {
+          values.length === 0 ?
+          <p>Please add a field</p> :
+          <div id="container" onDragOver={(event) => handleDragOver(event)}>
+            {
+              values.map((value, index) => {
+                return (
+                  <input 
+                    type="text"
+                    id={index.toString()}
+                    key={index}
+                    draggable
+                    className="draggable"
+                    onDragStart={(event) => handleDragStart(event, index)}
+                    onDragEnd={(event) => handleDragEnd(event, index)}
+                    placeholder={index.toString()}
+                    onChange={(event) => handleChange(event, index)}
+                    value={value}
+                  />
+                )
+               })
+            }
+    
+          </div>
+          
+        }
+        <button onClick={addField} type="button">Add Field</button>
+        <button onClick={generateRegex} type="button">Generate Regex</button>
+      </form>
+      <p>{regex}</p>
+    </>
+  )
+}
+
+export default App
